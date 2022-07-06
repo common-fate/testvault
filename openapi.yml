@@ -1,0 +1,114 @@
+openapi: 3.0.0
+info:
+  title: Test Vault
+  version: "1.0"
+  contact:
+    name: Common Fate
+    url: "https://commonfate.io"
+  description: |-
+    An API for the `testvault` Granted Provider.
+    The `testvault` provider is used for end-to-end testing of Granted.
+
+    ## Vault IDs
+    This API grants access to "vaults". These vaults can be any string and are not validated against a predefined list. When writing end-to-end tests you can provide a random ID for the vault ID. These vaults represent resources like Okta groups, AWS SSO PermissionSets, 1Password vaults, and so forth. They are just an example resource which we can grant access to.
+servers:
+  - url: "http://localhost:8085"
+paths:
+  "/vaults/{vaultId}/members":
+    parameters:
+      - schema:
+          type: string
+        name: vaultId
+        in: path
+        required: true
+    post:
+      summary: Add member to vault
+      operationId: add-member-to-vault
+      responses:
+        "200":
+          description: OK
+      description: Add a member to the vault. The vault ID can be any string.
+      requestBody:
+        $ref: "#/components/requestBodies/AddMember"
+  "/vaults/{vaultId}/members/{memberId}":
+    parameters:
+      - schema:
+          type: string
+        name: vaultId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: memberId
+        in: path
+        required: true
+    get:
+      summary: Check vault membership
+      tags: []
+      responses:
+        "200":
+          $ref: "#/components/responses/MembershipResponse"
+        "404":
+          $ref: "#/components/responses/ErrorResponse"
+      operationId: check-vault-membership
+      description: "Returns a HTTP 200 response if the user is a member of the vault. Returns a HTTP 404 response if the user has not been granted access. To grant access, call the 'Add Member to Vault' API endpoint."
+  "/vaults/{vaultId}/members/{memberId}/remove":
+    parameters:
+      - schema:
+          type: string
+        name: vaultId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: memberId
+        in: path
+        required: true
+    post:
+      summary: Remove a member from a vault
+      operationId: remove-member-from-vault
+      responses:
+        "200":
+          description: OK
+        "404":
+          $ref: "#/components/responses/ErrorResponse"
+      description: Removes a member from a vault. Returns a HTTP 404 response if the member wasn't assigned to the vault.
+components:
+  requestBodies:
+    AddMember:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              user:
+                type: string
+                description: The user ID or email to add to the vault. This can be any string.
+            required:
+              - user
+      description: Information used to add a member to a vault.
+  responses:
+    ErrorResponse:
+      description: An error returned from the service.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+            required:
+              - error
+          examples: {}
+    MembershipResponse:
+      description: Successful response for vault membership
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: A diagnostic message about the vault membership.
+            required:
+              - message

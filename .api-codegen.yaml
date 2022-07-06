@@ -1,0 +1,8 @@
+output: api.gen.go
+package: testvault
+generate:
+  - chi-server
+  - types
+  - skip-prune
+  - spec
+  - client
