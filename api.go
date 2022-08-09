@@ -3,6 +3,7 @@ package testvault
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/common-fate/apikit/apio"
@@ -77,11 +78,19 @@ func (a *API) AddMemberToVault(w http.ResponseWriter, r *http.Request, vaultId s
 // (GET /vaults/{vaultId}/members/{memberId})
 func (a *API) CheckVaultMembership(w http.ResponseWriter, r *http.Request, vaultId string, memberId string) {
 	ctx := r.Context()
+
+	// the memberId has been passed as an escaped value, so we want to unescape it.
+	memberId, err := url.QueryUnescape(memberId)
+	if err != nil {
+		apio.ErrorString(ctx, w, "user is not a member of this vault", http.StatusNotFound)
+		return
+	}
+
 	q := &GetMembership{
 		Vault: vaultId,
 		User:  memberId,
 	}
-	_, err := a.db.Query(ctx, q)
+	_, err = a.db.Query(ctx, q)
 	if err == ddb.ErrNoItems || !q.Result.Active {
 		apio.ErrorString(ctx, w, "user is not a member of this vault", http.StatusNotFound)
 		return
